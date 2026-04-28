@@ -884,33 +884,74 @@ elif page == "🔍 Comparativos":
                 else:
                     st.info("Sem dados de GMD nos lotes selecionados. Adicione pesagens.")
 
-        with tab3:
-            ocs = listar_ocorrencias()
-            if ocs.empty:
-                st.success("✅ Nenhuma ocorrência em nenhum lote.")
-            else:
-                rs = ocs.groupby("lote_codigo").agg(
-                    total=("id","count"),
-                    abertas=("status", lambda x: (x=="Aberta").sum()),
-                    custo=("custo","sum")
-                ).reset_index()
-                li_info = lotes[["codigo","quantidade"]].rename(columns={"codigo":"lote_codigo"})
-                rs = rs.merge(li_info, on="lote_codigo", how="left")
-                ca,cb = st.columns(2)
-                with ca:
-                    fig = px.bar(rs, x="lote_codigo", y="total", color="abertas",
-                                 title="Ocorrências por Lote",
-                                 color_continuous_scale=["#5a8a3c","#ffc107","#dc3545"])
-                    st.plotly_chart(fig, use_container_width=True)
-                with cb:
-                    rs_c = rs[rs["custo"]>0]
-                    if not rs_c.empty:
-                        fig2 = px.bar(rs_c, x="lote_codigo", y="custo",
-                                      title="Custo com Saúde por Lote",
-                                      color_discrete_sequence=["#c8401c"], text_auto=True)
-                        st.plotly_chart(fig2, use_container_width=True)
-                tl = ocs.groupby(["lote_codigo","tipo"]).size().reset_index(name="count")
-                fig3 = px.density_heatmap(tl, x="lote_codigo", y="tipo", z="count",
-                                           color_continuous_scale="YlOrRd",
-                                           title="Ocorrências por Tipo e Lote")
-                st.plotly_chart(fig3, use_container_width=True)
+       with tab3:
+    st.subheader("🐄 Animais por Lote")
+
+    lotes = listar_lotes()
+
+    if lotes.empty:
+        st.info("Cadastre um lote primeiro.")
+    else:
+        opts = (lotes["codigo"] + " — " + lotes["nome"]).tolist()
+        sel  = st.selectbox("Lote", opts)
+
+        cod  = sel.split(" — ")[0]
+        lid  = int(lotes[lotes["codigo"] == cod].iloc[0]["id"])
+
+        anis = listar_animais(lid)
+
+        # 📋 LISTAGEM
+        if not anis.empty:
+            cols = ["brinco","nome","sexo","raca","data_nascimento","peso_entrada","status"]
+            nc   = ["Brinco","Nome","Sexo","Raça","Nasc.","Peso Entrada (kg)","Status"]
+
+            st.dataframe(
+                anis[cols].rename(columns=dict(zip(cols,nc))),
+                use_container_width=True,
+                hide_index=True
+            )
+        else:
+            st.info("Nenhum animal individual cadastrado neste lote.")
+
+        st.markdown("---")
+
+        # ➕ CADASTRO
+        st.subheader("➕ Cadastrar Animal Individual")
+
+        with st.form("form_animal", clear_on_submit=True):
+            c1, c2 = st.columns(2)
+
+            with c1:
+                brinco = st.text_input("Brinco *")
+                nome_a = st.text_input("Nome")
+                sexo_a = st.selectbox("Sexo", ["Macho","Fêmea"])
+                raca_a = st.selectbox("Raça", RACAS)
+
+            with c2:
+                nasc   = st.date_input("Data Nascimento")
+                peso_e = st.number_input("Peso Entrada (kg)", min_value=0.0)
+                obs_a  = st.text_area("Observações")
+
+            submitted = st.form_submit_button("💾 Cadastrar Animal")
+
+            if submitted:
+                if not brinco:
+                    st.error("Brinco obrigatório.")
+                else:
+                    try:
+                        inserir_animal({
+                            "lote_id": lid,
+                            "brinco": brinco.strip(),
+                            "nome": nome_a,
+                            "sexo": sexo_a,
+                            "raca": raca_a,
+                            "data_nascimento": str(nasc) if nasc else None,
+                            "peso_entrada": peso_e,
+                            "observacoes": obs_a
+                        })
+
+                        st.success(f"Animal {brinco} cadastrado!")
+                        st.rerun()
+
+                    except Exception as e:
+                        st.error(f"Erro: {e}")
