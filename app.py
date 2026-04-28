@@ -884,7 +884,7 @@ elif page == "🔍 Comparativos":
                 else:
                     st.info("Sem dados de GMD nos lotes selecionados. Adicione pesagens.")
 
-       with tab3:
+    with tab3:
     st.subheader("🐄 Animais por Lote")
 
     lotes = listar_lotes()
@@ -896,11 +896,11 @@ elif page == "🔍 Comparativos":
         sel  = st.selectbox("Lote", opts)
 
         cod  = sel.split(" — ")[0]
-        lid  = int(lotes[lotes["codigo"] == cod].iloc[0]["id"])
+        lid  = int(lotes[lotes["codigo"]==cod].iloc[0]["id"])
 
         anis = listar_animais(lid)
 
-        # 📋 LISTAGEM
+        # LISTAGEM
         if not anis.empty:
             cols = ["brinco","nome","sexo","raca","data_nascimento","peso_entrada","status"]
             nc   = ["Brinco","Nome","Sexo","Raça","Nasc.","Peso Entrada (kg)","Status"]
@@ -915,7 +915,7 @@ elif page == "🔍 Comparativos":
 
         st.markdown("---")
 
-        # ➕ CADASTRO
+        # CADASTRO
         st.subheader("➕ Cadastrar Animal Individual")
 
         with st.form("form_animal", clear_on_submit=True):
@@ -923,7 +923,7 @@ elif page == "🔍 Comparativos":
 
             with c1:
                 brinco = st.text_input("Brinco *")
-                nome_a = st.text_input("Nome")
+                nome_a = st.text_input("Nome/Apelido")
                 sexo_a = st.selectbox("Sexo", ["Macho","Fêmea"])
                 raca_a = st.selectbox("Raça", RACAS)
 
@@ -932,9 +932,7 @@ elif page == "🔍 Comparativos":
                 peso_e = st.number_input("Peso Entrada (kg)", min_value=0.0)
                 obs_a  = st.text_area("Observações")
 
-            submitted = st.form_submit_button("💾 Cadastrar Animal")
-
-            if submitted:
+            if st.form_submit_button("💾 Cadastrar Animal"):
                 if not brinco:
                     st.error("Brinco obrigatório.")
                 else:
