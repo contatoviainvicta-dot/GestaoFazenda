@@ -611,8 +611,8 @@ with st.form("form_animal", clear_on_submit=True):
                                 if st.button("✅ Marcar Resolvida", key=f"res_{oc['id']}"):
                                     resolver_ocorrencia(oc["id"], str(dr))
                                     st.success("Resolvida!"); st.rerun()
-                else:
-                    st.success("✅ Nenhuma ocorrência com esses filtros.")
+                    else:
+                        st.success("✅ Nenhuma ocorrência com esses filtros.")
 
     with tab2:
         lotes = listar_lotes()
