@@ -462,38 +462,38 @@ with st.form("form_animal", clear_on_submit=True):
 
 # ════════════ PESAGENS ════════════
     
-elif page == "⚖️ Pesagens":
-    st.title("⚖️ Controle de Pesagens")
-    tab1, tab2, tab3 = st.tabs(["📋 Histórico","➕ Registrar Pesagem","📈 Evolução por Animal"])
+    elif page == "⚖️ Pesagens":
+        st.title("⚖️ Controle de Pesagens")
+        tab1, tab2, tab3 = st.tabs(["📋 Histórico","➕ Registrar Pesagem","📈 Evolução por Animal"])
 
-    with tab1:
-        lotes = listar_lotes()
-        c1,c2 = st.columns(2)
-        with c1:
-            opts = ["Todos"] + (lotes["codigo"] + " — " + lotes["nome"]).tolist() if not lotes.empty else ["Todos"]
-            fl = st.selectbox("Filtrar por Lote", opts)
-        with c2:
-            ft = st.selectbox("Tipo", ["Todos","Entrada","Rotina","Saída","Veterinária"])
-        if fl != "Todos" and not lotes.empty:
-            cod = fl.split(" — ")[0]
-            lid = lotes[lotes["codigo"]==cod].iloc[0]["id"]
-            pes = listar_pesagens(lote_id=lid)
-        else:
-            pes = listar_pesagens()
-        if ft != "Todos":
-            pes = pes[pes["tipo"]==ft]
-        if not pes.empty:
-            cols = ["data_pesagem","lote_codigo","brinco","peso","tipo","responsavel"]
-            nc   = ["Data","Lote","Brinco","Peso (kg)","Tipo","Responsável"]
-            exib = pes[[c for c in cols if c in pes.columns]].copy()
-            exib.columns = nc[:len(exib.columns)]
-            st.dataframe(exib, use_container_width=True, hide_index=True)
-            c1,c2,c3 = st.columns(3)
-            c1.metric("Total Registros", len(pes))
-            c2.metric("Peso Médio (kg)", f"{pes['peso'].mean():.1f}")
-            c3.metric("Peso Máximo (kg)", f"{pes['peso'].max():.1f}")
-        else:
-            st.info("Nenhuma pesagem encontrada.")
+        with tab1:
+            lotes = listar_lotes()
+            c1,c2 = st.columns(2)
+            with c1:
+                opts = ["Todos"] + (lotes["codigo"] + " — " + lotes["nome"]).tolist() if not lotes.empty else ["Todos"]
+                fl = st.selectbox("Filtrar por Lote", opts)
+            with c2:
+                ft = st.selectbox("Tipo", ["Todos","Entrada","Rotina","Saída","Veterinária"])
+            if fl != "Todos" and not lotes.empty:
+                cod = fl.split(" — ")[0]
+                lid = lotes[lotes["codigo"]==cod].iloc[0]["id"]
+                pes = listar_pesagens(lote_id=lid)
+            else:
+                pes = listar_pesagens()
+            if ft != "Todos":
+                pes = pes[pes["tipo"]==ft]
+            if not pes.empty:
+                cols = ["data_pesagem","lote_codigo","brinco","peso","tipo","responsavel"]
+                nc   = ["Data","Lote","Brinco","Peso (kg)","Tipo","Responsável"]
+                exib = pes[[c for c in cols if c in pes.columns]].copy()
+                exib.columns = nc[:len(exib.columns)]
+                st.dataframe(exib, use_container_width=True, hide_index=True)
+                c1,c2,c3 = st.columns(3)
+                c1.metric("Total Registros", len(pes))
+                c2.metric("Peso Médio (kg)", f"{pes['peso'].mean():.1f}")
+                c3.metric("Peso Máximo (kg)", f"{pes['peso'].max():.1f}")
+            else:
+                st.info("Nenhuma pesagem encontrada.")
 
     with tab2:
         lotes = listar_lotes()
