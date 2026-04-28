@@ -115,10 +115,24 @@ def atualizar_status_lote(lote_id, status):
 
 # ── Animais ──
 def inserir_animal(d):
-    conn = get_conn(); c = conn.cursor()
-    c.execute("""INSERT INTO animais (lote_id,brinco,nome,sexo,raca,data_nascimento,peso_entrada,observacoes)
-        VALUES (:lote_id,:brinco,:nome,:sexo,:raca,:data_nascimento,:peso_entrada,:observacoes)""", d)
-    conn.commit(); aid = c.lastrowid; conn.close(); return aid
+    conn = get_conn()
+    c = conn.cursor()
+
+    try:
+        c.execute("""
+            INSERT INTO animais 
+            (lote_id,brinco,nome,sexo,raca,data_nascimento,peso_entrada,observacoes)
+            VALUES (:lote_id,:brinco,:nome,:sexo,:raca,:data_nascimento,:peso_entrada,:observacoes)
+        """, d)
+
+        conn.commit()
+        return c.lastrowid
+
+    except sqlite3.IntegrityError:
+        raise Exception("Brinco já cadastrado.")
+
+    finally:
+        conn.close()
 
 def listar_animais(lote_id=None):
     conn = get_conn()
@@ -394,50 +408,57 @@ elif page == "📦 Lotes":
                     except Exception as e:
                         st.error(f"Erro: {e}")
 
-    with tab3:
-        st.subheader("🐄 Animais por Lote")
-        lotes = listar_lotes()
-        if lotes.empty:
-            st.info("Cadastre um lote primeiro.")
+        st.subheader("➕ Cadastrar Animal Individual")
+
+with st.form("form_animal", clear_on_submit=True):
+    c1, c2 = st.columns(2)
+
+    with c1:
+        brinco  = st.text_input("Brinco *", placeholder="0042")
+        nome_a  = st.text_input("Nome/Apelido")
+        sexo_a  = st.selectbox("Sexo", ["Macho","Fêmea"])
+        raca_a  = st.selectbox("Raça", RACAS)
+
+    with c2:
+        nasc    = st.date_input("Data Nascimento")
+        peso_e  = st.number_input("Peso Entrada (kg)", min_value=0.0, step=0.5)
+        obs_a   = st.text_area("Observações")
+
+    submitted = st.form_submit_button("💾 Cadastrar Animal", use_container_width=True)
+
+    if submitted:
+        if not brinco:
+            st.error("❌ Brinco é obrigatório.")
         else:
-            opts = (lotes["codigo"] + " — " + lotes["nome"]).tolist()
-            sel  = st.selectbox("Lote", opts)
-            cod  = sel.split(" — ")[0]
-            lid  = lotes[lotes["codigo"]==cod].iloc[0]["id"]
-            anis = listar_animais(lid)
-            if not anis.empty:
-                cols = ["brinco","nome","sexo","raca","data_nascimento","peso_entrada","status"]
-                nc   = ["Brinco","Nome","Sexo","Raça","Nasc.","Peso Entrada (kg)","Status"]
-                st.dataframe(anis[cols].rename(columns=dict(zip(cols,nc))),
-                             use_container_width=True, hide_index=True)
-            else:
-                st.info("Nenhum animal individual cadastrado neste lote.")
-            st.markdown("---")
-            st.subheader("➕ Cadastrar Animal Individual")
-            with st.form("form_animal", clear_on_submit=True):
-                c1,c2 = st.columns(2)
-                with c1:
-                    brinco  = st.text_input("Brinco *", placeholder="0042")
-                    nome_a  = st.text_input("Nome/Apelido")
-                    sexo_a  = st.selectbox("Sexo", ["Macho","Fêmea"])
-                    raca_a  = st.selectbox("Raça", RACAS)
-                with c2:
-                    nasc    = st.date_input("Data Nascimento", value=None)
-                    peso_e  = st.number_input("Peso Entrada (kg)", min_value=0.0, step=0.5)
-                    obs_a   = st.text_area("Observações")
-                if st.form_submit_button("💾 Cadastrar Animal", use_container_width=True):
-                    if not brinco:
-                        st.error("Brinco obrigatório.")
-                    else:
-                        try:
-                            inserir_animal({"lote_id":lid,"brinco":brinco,"nome":nome_a,
-                                "sexo":sexo_a,"raca":raca_a,
-                                "data_nascimento":str(nasc) if nasc else None,
-                                "peso_entrada":peso_e,"observacoes":obs_a})
-                            st.success(f"✅ Animal brinco {brinco} cadastrado!")
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Erro: {e}")
+            try:
+                # 🔒 Verifica duplicidade antes de inserir
+                conn = get_conn()
+                existe = pd.read_sql(
+                    "SELECT * FROM animais WHERE brinco = ?",
+                    conn,
+                    params=(brinco,)
+                )
+                conn.close()
+
+                if not existe.empty:
+                    st.error(f"❌ Já existe um animal com brinco {brinco}.")
+                else:
+                    inserir_animal({
+                        "lote_id": int(lid),  # 🔒 garante inteiro
+                        "brinco": brinco.strip(),
+                        "nome": nome_a.strip(),
+                        "sexo": sexo_a,
+                        "raca": raca_a,
+                        "data_nascimento": str(nasc) if nasc else None,
+                        "peso_entrada": float(peso_e),
+                        "observacoes": obs_a.strip()
+                    })
+
+                    st.success(f"✅ Animal {brinco} cadastrado com sucesso!")
+                    st.rerun()
+
+            except Exception as e:
+                st.error(f"Erro ao cadastrar: {e}")
 
 # ════════════ PESAGENS ════════════
 elif page == "⚖️ Pesagens":
