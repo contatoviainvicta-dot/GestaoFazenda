@@ -478,28 +478,46 @@ elif page == "⚖️ Pesagens":
         if lotes.empty:
             st.warning("Cadastre um lote primeiro.")
         else:
+            # Lote fora do form para atualizar animais dinamicamente
+            lsel = st.selectbox("📦 Lote *", (lotes["codigo"]+" — "+lotes["nome"]).tolist(), key="pes_lote_sel")
+            cod  = lsel.split(" — ")[0]
+            lid  = lotes[lotes["codigo"]==cod].iloc[0]["id"]
+            anis = listar_animais(lid)
+
+            if anis.empty:
+                st.warning(
+                    "⚠️ Este lote não possui animais individuais cadastrados.\n\n"
+                    "Para pesar por animal, vá em **📦 Lotes → aba 'Animais do Lote'** "
+                    "e cadastre cada animal com seu número de brinco. "
+                    "A pesagem abaixo será registrada para o **lote inteiro**."
+                )
+                opca = ["Lote inteiro"]
+            else:
+                st.success(f"✅ {len(anis)} animal(is) cadastrado(s) neste lote — selecione o brinco para pesagem individual.")
+                opca = ["Lote inteiro"] + anis["brinco"].tolist()
+
             with st.form("form_pes", clear_on_submit=True):
-                c1,c2 = st.columns(2)
+                c1, c2 = st.columns(2)
                 with c1:
-                    lsel = st.selectbox("Lote *", (lotes["codigo"]+" — "+lotes["nome"]).tolist())
-                    cod  = lsel.split(" — ")[0]
-                    lid  = lotes[lotes["codigo"]==cod].iloc[0]["id"]
-                    anis = listar_animais(lid)
-                    opca = ["Lote inteiro"] + anis["brinco"].tolist() if not anis.empty else ["Lote inteiro"]
-                    asel = st.selectbox("Animal (Brinco)", opca)
-                    dt_p = st.date_input("Data *", value=date.today())
-                    tipo = st.selectbox("Tipo", ["Rotina","Entrada","Saída","Veterinária"])
+                    asel = st.selectbox(
+                        "🐄 Animal (Brinco)",
+                        opca,
+                        help="Selecione um brinco para pesagem individual, ou mantenha 'Lote inteiro'."
+                    )
+                    dt_p = st.date_input("📅 Data da Pesagem *", value=date.today())
+                    tipo = st.selectbox("Tipo de Pesagem", ["Rotina","Entrada","Saída","Veterinária"])
                 with c2:
-                    peso = st.number_input("Peso (kg) *", min_value=0.1, step=0.5, value=300.0)
-                    resp = st.text_input("Responsável")
-                    obs  = st.text_area("Observações")
-                if st.form_submit_button("💾 Registrar", use_container_width=True):
+                    peso = st.number_input("⚖️ Peso (kg) *", min_value=0.1, step=0.5, value=300.0)
+                    resp = st.text_input("👤 Responsável", placeholder="Ex: João Silva")
+                    obs  = st.text_area("📝 Observações", placeholder="Condição corporal, comportamento...")
+                if st.form_submit_button("💾 Registrar Pesagem", use_container_width=True):
                     aid = None
                     if asel != "Lote inteiro" and not anis.empty:
                         aid = anis[anis["brinco"]==asel].iloc[0]["id"]
                     inserir_pesagem({"lote_id":lid,"animal_id":aid,"data_pesagem":str(dt_p),
                         "peso":peso,"tipo":tipo,"responsavel":resp,"observacoes":obs})
-                    st.success(f"✅ Pesagem de {peso} kg registrada!")
+                    alvo = f"animal brinco **{asel}**" if asel != "Lote inteiro" else "**lote inteiro**"
+                    st.success(f"✅ Pesagem de **{peso} kg** registrada para {alvo}!")
                     st.rerun()
 
     with tab3:
