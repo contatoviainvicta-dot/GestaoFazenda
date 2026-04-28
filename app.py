@@ -461,7 +461,8 @@ with st.form("form_animal", clear_on_submit=True):
                 st.error(f"Erro ao cadastrar: {e}")
 
 # ════════════ PESAGENS ════════════
-elif page == "⚖️ Pesagens":
+    
+    elif page == "⚖️ Pesagens":
     st.title("⚖️ Controle de Pesagens")
     tab1, tab2, tab3 = st.tabs(["📋 Histórico","➕ Registrar Pesagem","📈 Evolução por Animal"])
 
