@@ -579,40 +579,40 @@ with st.form("form_animal", clear_on_submit=True):
                         st.plotly_chart(fig, use_container_width=True)
 
 # ════════════ OCORRÊNCIAS ════════════
-elif page == "🏥 Ocorrências":
-    st.title("🏥 Ocorrências Adversas")
-    tab1, tab2, tab3 = st.tabs(["📋 Listar","➕ Registrar","📊 Relatório"])
+    elif page == "🏥 Ocorrências":
+        st.title("🏥 Ocorrências Adversas")
+        tab1, tab2, tab3 = st.tabs(["📋 Listar","➕ Registrar","📊 Relatório"])
 
-    with tab1:
-        c1,c2,c3 = st.columns(3)
-        with c1: fs = st.selectbox("Status", ["Todos","Aberta","Resolvida"])
-        with c2: ft = st.selectbox("Tipo", ["Todos"]+TIPOS_OC)
-        lotes = listar_lotes()
-        with c3:
-            opl = ["Todos"] + (lotes["codigo"]+" — "+lotes["nome"]).tolist() if not lotes.empty else ["Todos"]
-            fl = st.selectbox("Lote", opl)
-        ocs = listar_ocorrencias()
-        if fs != "Todos": ocs = ocs[ocs["status"]==fs]
-        if ft != "Todos": ocs = ocs[ocs["tipo"]==ft]
-        if fl != "Todos" and not lotes.empty:
-            cod = fl.split(" — ")[0]
-            lid = lotes[lotes["codigo"]==cod].iloc[0]["id"]
-            ocs = ocs[ocs["lote_id"]==lid]
-        if not ocs.empty:
-            for _, oc in ocs.iterrows():
-                ico = "🔴" if oc["status"]=="Aberta" else "✅"
-                with st.expander(f"{ico} [{oc['data_ocorrencia']}] {oc['tipo']} — Lote: {oc.get('lote_codigo','N/A')} | Animal: {oc.get('brinco','Lote inteiro') or 'Lote inteiro'}"):
-                    ca,cb,cc = st.columns(3)
-                    ca.markdown(f"**Tipo:** {oc['tipo']}\n\n**Data:** {oc['data_ocorrencia']}\n\n**Status:** {oc['status']}")
-                    cb.markdown(f"**Responsável:** {oc.get('responsavel','—')}\n\n**Custo:** R$ {oc.get('custo',0):.2f}")
-                    cc.markdown(f"**Descrição:** {oc.get('descricao','—')}\n\n**Tratamento:** {oc.get('tratamento','—')}")
-                    if oc["status"] == "Aberta":
-                        dr = st.date_input("Data resolução", value=date.today(), key=f"dr_{oc['id']}")
-                        if st.button("✅ Marcar Resolvida", key=f"res_{oc['id']}"):
-                            resolver_ocorrencia(oc["id"], str(dr))
-                            st.success("Resolvida!"); st.rerun()
-        else:
-            st.success("✅ Nenhuma ocorrência com esses filtros.")
+        with tab1:
+            c1,c2,c3 = st.columns(3)
+            with c1: fs = st.selectbox("Status", ["Todos","Aberta","Resolvida"])
+            with c2: ft = st.selectbox("Tipo", ["Todos"]+TIPOS_OC)
+            lotes = listar_lotes()
+            with c3:
+                opl = ["Todos"] + (lotes["codigo"]+" — "+lotes["nome"]).tolist() if not lotes.empty else ["Todos"]
+                fl = st.selectbox("Lote", opl)
+            ocs = listar_ocorrencias()
+            if fs != "Todos": ocs = ocs[ocs["status"]==fs]
+            if ft != "Todos": ocs = ocs[ocs["tipo"]==ft]
+            if fl != "Todos" and not lotes.empty:
+                cod = fl.split(" — ")[0]
+                lid = lotes[lotes["codigo"]==cod].iloc[0]["id"]
+                ocs = ocs[ocs["lote_id"]==lid]
+            if not ocs.empty:
+                for _, oc in ocs.iterrows():
+                    ico = "🔴" if oc["status"]=="Aberta" else "✅"
+                    with st.expander(f"{ico} [{oc['data_ocorrencia']}] {oc['tipo']} — Lote: {oc.get('lote_codigo','N/A')} | Animal: {oc.get('brinco','Lote inteiro') or 'Lote inteiro'}"):
+                        ca,cb,cc = st.columns(3)
+                        ca.markdown(f"**Tipo:** {oc['tipo']}\n\n**Data:** {oc['data_ocorrencia']}\n\n**Status:** {oc['status']}")
+                        cb.markdown(f"**Responsável:** {oc.get('responsavel','—')}\n\n**Custo:** R$ {oc.get('custo',0):.2f}")
+                        cc.markdown(f"**Descrição:** {oc.get('descricao','—')}\n\n**Tratamento:** {oc.get('tratamento','—')}")
+                        if oc["status"] == "Aberta":
+                            dr = st.date_input("Data resolução", value=date.today(), key=f"dr_{oc['id']}")
+                            if st.button("✅ Marcar Resolvida", key=f"res_{oc['id']}"):
+                                resolver_ocorrencia(oc["id"], str(dr))
+                                st.success("Resolvida!"); st.rerun()
+            else:
+                st.success("✅ Nenhuma ocorrência com esses filtros.")
 
     with tab2:
         lotes = listar_lotes()
